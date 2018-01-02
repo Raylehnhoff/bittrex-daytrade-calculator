@@ -1,0 +1,76 @@
+<head>
+    <title>Bittrex Day Trade Calculator</title>
+</head>
+
+<body>
+    <div>
+        <h3>Buy</h3>
+        <label for="BuyCount">(BTC) Count</label>
+        <input id="BuyCount" name="BuyCount">
+        <label for="BuyFor">Buy For
+            <input id="BuyFor" name="BuyFor">
+        </label>
+        <label for="BuyFees">Fees Paid</label>
+        <input id="BuyFees" readonly name="BuyFees">
+        <label for="BuyProceeds">Proceeds</label>
+        <input readonly id="BuyProceeds" name="BuyProceeds">
+    </div>
+    <div>
+        <h3>Sell</h3>
+        <label for="SellCount">Count</label>
+        <input id="SellCount" name="SellCount">
+        <label for="SellFor">Sell For
+            <input id="SellFor" name="SellFor">
+        </label>
+        <label for="SellFees">Fees Paid</label>
+        <input id="SellFees" readonly name="SellFees">
+        <label for="SellProceeds">Proceeds</label>
+        <input readonly id="SellProceeds" name="SellProceeds">
+        <label for="Profit">BTC Profit %</label>
+        <input readonly id="Profit" name="Profit">
+    </div>
+    <div>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g="
+        crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#SellCount, #SellFor").on("change", function (e) {
+                calcSellPL();
+            });
+
+            $("#BuyCount, #BuyFor").on("change", function (e) {
+                calcBuyPL();
+            });
+
+
+            function calcSellPL() {
+                var count = parseFloat($("#SellCount").val());
+                var sellFor = parseFloat($("#SellFor").val());
+                var total = count * sellFor;
+                var fees = total * 0.0025;
+                var net = total - fees;
+                $("#SellFees").val(fees);
+                $("#SellProceeds").val(net);
+                var profitPct = (1 - parseFloat($("#BuyCount").val()) / parseFloat($("#SellProceeds").val())) * 100;
+                $("#Profit").val(profitPct.toFixed(2))
+            }
+
+            function calcBuyPL(){
+                var count = parseFloat($("#BuyCount").val());
+                var buyFor = parseFloat($("#BuyFor").val());
+                var total = count / buyFor;
+                var fees = total * 0.0025;
+                var net = total - fees;
+                $("#BuyFees").val(fees);
+                $("#BuyProceeds").val(net);
+                $("#SellCount").val(net);
+                var profitPct = (1 - parseFloat($("#BuyCount").val()) / parseFloat($("#SellProceeds").val())) * 100;
+                $("#Profit").val(profitPct.toFixed(2))
+            }
+
+        });
+    </script>
+</body>
