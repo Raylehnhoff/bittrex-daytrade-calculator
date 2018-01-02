@@ -7,7 +7,8 @@
         <h3>Buy</h3>
         <label for="BuyCount">(BTC) Count</label>
         <input id="BuyCount" name="BuyCount">
-        <label for="BuyFor">Buy For
+        <label for="BuyFor">
+            Buy For
             <input id="BuyFor" name="BuyFor">
         </label>
         <label for="BuyFees">Fees Paid</label>
@@ -19,7 +20,8 @@
         <h3>Sell</h3>
         <label for="SellCount">Count</label>
         <input id="SellCount" name="SellCount">
-        <label for="SellFor">Sell For
+        <label for="SellFor">
+            Sell For
             <input id="SellFor" name="SellFor">
         </label>
         <label for="SellFees">Fees Paid</label>
@@ -30,21 +32,37 @@
         <input readonly id="Profit" name="Profit">
     </div>
     <div>
-
+        <h3>Coin Info</h3>
+        <label for="Circ">Circulation</label>
+        <input id="Circ" name="Circ" />
+        <label for="Price">
+            Price (tied to sell for)
+        </label>
+        <input readonly id="CapPrice" />
+        <label for="BTCPrice">$ BTC</label>
+        <input name="BTCPrice" id="BTCPrice" />
+        <label>Market Cap</label>
+        <input readonly id="MarketCap" />
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g="
-        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
     <script type="text/javascript">
         $(document).ready(function () {
+            loadLocalStorage();
             $("#SellCount, #SellFor").on("change", function (e) {
                 calcSellPL();
+                calcMarketCap();
             });
 
             $("#BuyCount, #BuyFor").on("change", function (e) {
                 calcBuyPL();
+                calcMarketCap();
             });
 
+            $("#Circ").on("change",
+                function (e) {
+                    calcMarketCap();
+                });
 
             function calcSellPL() {
                 var count = parseFloat($("#SellCount").val());
@@ -52,13 +70,14 @@
                 var total = count * sellFor;
                 var fees = total * 0.0025;
                 var net = total - fees;
+                $("#CapPrice").val(sellFor);
                 $("#SellFees").val(fees);
                 $("#SellProceeds").val(net);
                 var profitPct = (1 - parseFloat($("#BuyCount").val()) / parseFloat($("#SellProceeds").val())) * 100;
-                $("#Profit").val(profitPct.toFixed(2))
+                $("#Profit").val(profitPct.toFixed(2));
             }
 
-            function calcBuyPL(){
+            function calcBuyPL() {
                 var count = parseFloat($("#BuyCount").val());
                 var buyFor = parseFloat($("#BuyFor").val());
                 var total = count / buyFor;
@@ -68,9 +87,47 @@
                 $("#BuyProceeds").val(net);
                 $("#SellCount").val(net);
                 var profitPct = (1 - parseFloat($("#BuyCount").val()) / parseFloat($("#SellProceeds").val())) * 100;
-                $("#Profit").val(profitPct.toFixed(2))
+                $("#Profit").val(profitPct.toFixed(2));
+                $("#CapPrice").val($("#SellFor").val());
             }
 
+            function calcMarketCap() {
+                var sellForPrice = parseFloat($("#SellFor").val());
+                var BTCPrice = parseFloat($("#BTCPrice").val());
+                var circ = parseFloat($("#Circ").val());
+                $("#MarketCap").val((sellForPrice * circ * BTCPrice).toLocaleString());
+                saveLocalStorage();
+            }
+
+            function loadLocalStorage() {
+                $("#BuyCount").val(localStorage["BuyCount"]);
+                $("#BuyFor").val(localStorage["BuyFor"]);
+                $("#SellFor").val(localStorage["SellFor"]);
+                $("#Circ").val(localStorage["Circ"]);
+                getBTCCap();
+                calcBuyPL();
+                calcSellPL();
+                calcMarketCap();
+                
+            }
+
+            function saveLocalStorage() {
+                localStorage["BuyCount"] = $("#BuyCount").val();
+                localStorage["BuyFor"] = $("#BuyFor").val();
+                localStorage["SellFor"] = $("#SellFor").val();
+                localStorage["Circ"] = $("#Circ").val();
+            }
+            function getBTCCap() {
+                $.get("https://api.coinmarketcap.com/v1/ticker/bitcoin/",
+                    function(data) {
+                        $("#BTCPrice").val(data[0]["price_usd"]);
+                        calcMarketCap();
+                    });
+            }
+            setInterval(function() {
+                    getBTCCap();
+                },
+                5000);
         });
     </script>
 </body>
