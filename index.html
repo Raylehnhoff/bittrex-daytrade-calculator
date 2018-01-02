@@ -5,6 +5,9 @@
 <body>
     <div>
         <h3>Buy</h3>
+        <p id="error" style="color:red; font-weight: bold;"></p>
+        <label>Ticker</label>
+        <input id="Ticker" placeholder="Bitcoin" name="ticker"/>
         <label for="BuyCount">(BTC) Count</label>
         <input id="BuyCount" name="BuyCount">
         <label for="BuyFor">
@@ -33,15 +36,15 @@
     </div>
     <div>
         <h3>Coin Info</h3>
-        <label for="Circ">Circulation</label>
-        <input id="Circ" name="Circ" />
+        <label for="Circ" readonly>Circulation</label>
+        <input id="Circ" name="Circ" placeholder="Load from ticker" />
         <label for="Price">
             Price (tied to sell for)
         </label>
         <input readonly id="CapPrice" />
         <label for="BTCPrice">$ BTC</label>
         <input name="BTCPrice" id="BTCPrice" />
-        <label>Market Cap</label>
+        <label>New Market Cap</label>
         <input readonly id="MarketCap" />
     </div>
 
@@ -58,6 +61,12 @@
                 calcBuyPL();
                 calcMarketCap();
             });
+
+            $("#Ticker").on("change",
+                function(e) {
+                    getTicker();
+                    saveLocalStorage();
+                });
 
             $("#Circ").on("change",
                 function (e) {
@@ -104,11 +113,13 @@
                 $("#BuyFor").val(localStorage["BuyFor"]);
                 $("#SellFor").val(localStorage["SellFor"]);
                 $("#Circ").val(localStorage["Circ"]);
+                $("#Ticker").val(localStorage["Ticker"]);
                 getBTCCap();
                 calcBuyPL();
                 calcSellPL();
+                getTicker();
                 calcMarketCap();
-                
+
             }
 
             function saveLocalStorage() {
@@ -116,6 +127,7 @@
                 localStorage["BuyFor"] = $("#BuyFor").val();
                 localStorage["SellFor"] = $("#SellFor").val();
                 localStorage["Circ"] = $("#Circ").val();
+                localStorage["Ticker"] = $("#Ticker").val();
             }
             function getBTCCap() {
                 $.get("https://api.coinmarketcap.com/v1/ticker/bitcoin/",
@@ -124,10 +136,24 @@
                         calcMarketCap();
                     });
             }
+
+            function getTicker() {
+                
+                    $.get("https://api.coinmarketcap.com/v1/ticker/" + $("#Ticker").val() + "/")
+                        .done(function (data) {
+                            $("#error").text("");
+                            $("#Circ").val(data[0]["available_supply"]);
+                            localStorage["Circ"] = data[0]["available_supply"];
+                            calcMarketCap();
+                        })
+                        .fail(function(data) {
+                            $("#error").text(data.responseJSON.error);
+                        });
+            }
             setInterval(function() {
                     getBTCCap();
                 },
-                5000);
+                15000);
         });
     </script>
 </body>
